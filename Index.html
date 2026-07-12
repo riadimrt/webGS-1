@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Keuangan PRABU</title>
+  <?!= include_("Style"); ?>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">💰</div>
+    <h1 class="login-title">PRABU</h1>
+    <p class="login-sub">Laporan Keuangan Pribadi</p>
+    <div class="form-group">
+      <input type="password" id="loginPwd" class="form-control" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary w-full" onclick="doLogin()">🔐 Masuk</button>
+    <p id="loginErr" class="login-err"></p>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="mainApp" class="hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">💰</span>
+      <span class="sidebar-title">PRABU</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-item" onclick="showPage('transaksi')" data-page="transaksi">
+        <span class="nav-icon">📝</span> Input Transaksi
+      </a>
+      <a class="nav-item" onclick="showPage('laporan')" data-page="laporan">
+        <span class="nav-icon">📈</span> Laporan
+      </a>
+      <a class="nav-item" onclick="showPage('rekening')" data-page="rekening">
+        <span class="nav-icon">🏦</span> Rekening
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="doLogout()">⏻ Keluar</button>
+    </div>
+  </aside>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="burger" onclick="toggleSidebar()">☰</button>
+    <span id="pageTitle" class="topbar-title">Dashboard</span>
+    <span class="topbar-user">👤 PRABU</span>
+  </div>
+
+  <!-- CONTENT -->
+  <main class="content" id="mainContent">
+
+    <!-- PAGE: DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h2>Dashboard Keuangan</h2>
+        <span id="lastUpdate" class="badge-info"></span>
+      </div>
+      <!-- Stat Cards -->
+      <div class="stat-grid" id="statCards">
+        <div class="stat-card loading">Memuat...</div>
+      </div>
+      <!-- Saldo per Rekening -->
+      <div class="card mt-4">
+        <div class="card-header">🏦 Saldo per Rekening</div>
+        <div class="card-body" id="saldoList">Memuat...</div>
+      </div>
+      <!-- Transaksi Terakhir -->
+      <div class="card mt-4">
+        <div class="card-header">🕐 10 Transaksi Terakhir</div>
+        <div class="card-body p-0">
+          <div class="table-wrap" id="recentTable">Memuat...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: TRANSAKSI -->
+    <div id="page-transaksi" class="page">
+      <div class="page-header"><h2>Input Transaksi</h2></div>
+      <div class="card">
+        <div class="card-body">
+          <!-- Tab Tipe -->
+          <div class="tab-group mb-4">
+            <button class="tab-btn active" onclick="setTipe('Keluar',this)">📤 Pengeluaran</button>
+            <button class="tab-btn" onclick="setTipe('Masuk',this)">📥 Pemasukan</button>
+            <button class="tab-btn" onclick="setTipe('Transfer',this)">🔄 Transfer</button>
+          </div>
+          <input type="hidden" id="trxTipe" value="Keluar">
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tanggal</label>
+              <input type="date" id="trxTgl" class="form-control">
+            </div>
+            <div class="form-group" id="grpKategori">
+              <label>Kategori</label>
+              <select id="trxKat" class="form-control">
+                <option>Makan & Minum</option>
+                <option>Transport</option>
+                <option>Belanja</option>
+                <option>Tagihan</option>
+                <option>Operasional</option>
+                <option>Gaji</option>
+                <option>Honor</option>
+                <option>Investasi</option>
+                <option>Lainnya</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Jumlah (Rp)</label>
+              <input type="number" id="trxJml" class="form-control" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>Rekening <span id="lblRek">Sumber</span></label>
+              <select id="trxRek" class="form-control"></select>
+            </div>
+            <div class="form-group" id="grpRekTujuan" style="display:none">
+              <label>Rekening Tujuan</label>
+              <select id="trxRekTujuan" class="form-control"></select>
+            </div>
+            <div class="form-group full">
+              <label>Keterangan (opsional)</label>
+              <input type="text" id="trxKet" class="form-control" placeholder="Contoh: Makan siang di warteg...">
+            </div>
+          </div>
+
+          <button class="btn btn-primary mt-4" onclick="simpanTrx()">💾 Simpan Transaksi</button>
+          <div id="trxMsg" class="msg-box mt-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: LAPORAN -->
+    <div id="page-laporan" class="page">
+      <div class="page-header"><h2>Laporan Keuangan</h2></div>
+
+      <div class="filter-bar">
+        <select id="filterPeriode" class="form-control sm" onchange="loadLaporan()">
+          <option value="hari ini">Hari Ini</option>
+          <option value="minggu ini">Minggu Ini</option>
+          <option value="bulan ini" selected>Bulan Ini</option>
+          <option value="semua">Semua Data</option>
+        </select>
+        <select id="filterRek" class="form-control sm" onchange="loadLaporan()">
+          <option value="">Semua Rekening</option>
+        </select>
+      </div>
+
+      <!-- Ringkasan -->
+      <div class="stat-grid mt-3" id="laporanStat"></div>
+
+      <!-- Grafik Pie Kategori -->
+      <div class="card mt-4">
+        <div class="card-header">📊 Alokasi Pengeluaran per Kategori</div>
+        <div class="card-body" id="grafikKat"></div>
+      </div>
+
+      <!-- Tabel Transaksi -->
+      <div class="card mt-4">
+        <div class="card-header">📋 Riwayat Transaksi</div>
+        <div class="card-body p-0">
+          <div class="table-wrap" id="laporanTable"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: REKENING -->
+    <div id="page-rekening" class="page">
+      <div class="page-header"><h2>Manajemen Rekening</h2></div>
+      <div class="card">
+        <div class="card-header">➕ Tambah Rekening Baru</div>
+        <div class="card-body">
+          <div class="flex-row gap-2">
+            <input type="text" id="newRekNama" class="form-control" placeholder="Nama rekening (BCA, GoPay, dll.)">
+            <button class="btn btn-primary" onclick="tambahRek()">Tambah</button>
+          </div>
+          <div id="rekMsg" class="msg-box mt-2"></div>
+        </div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-header">🏦 Daftar Rekening</div>
+        <div class="card-body p-0" id="rekList">Memuat...</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<?!= include_("Script"); ?>
+</body>
+</html>
